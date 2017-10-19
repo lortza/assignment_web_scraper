@@ -40,8 +40,8 @@ class Scraper
       end.submit
 
       go_to_job_page(result, name)
-    end #agent
-  end #retrieve_job_results
+    end
+  end
 
   def go_to_job_page(result, name)
     puts "Finding results for #{name}"
@@ -66,7 +66,7 @@ class Scraper
     job.remote = job_page.root.css('.iconsiblings span.mL20').text.strip
 
     add_job_to_matches(job)
-  end #build_job
+  end
 
   def add_job_to_matches(job)
     @matches << job
