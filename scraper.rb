@@ -16,10 +16,10 @@ class Scraper
     @matches = []
   end
 
-  def scrape(title:, location:, distance:)
+  def scrape(name:, title:, location:)
     set_up_agent
-    retrieve_job_results(title, location)
-    export_matches
+    retrieve_job_results(name, title, location)
+    export_matches(name)
   end
 
   private
@@ -29,7 +29,7 @@ class Scraper
     agent.user_agent_alias = 'Mac Safari'
   end
 
-  def retrieve_job_results(title, location)
+  def retrieve_job_results(name, title, location)
     agent.get(@base_url) do |page|
       result = page.form_with(:id => 'search-form') do |form|
         job_title = form.field_with(:id => 'search-field-keyword')
@@ -39,11 +39,12 @@ class Scraper
         job_location = location
       end.submit
 
-      go_to_job_page(result)
+      go_to_job_page(result, name)
     end #agent
   end #retrieve_job_results
 
-  def go_to_job_page(result)
+  def go_to_job_page(result, name)
+    puts "Finding results for #{name}"
     result.links_with(:href => /jobs\/detail/).each do |link|
       job = Job.new
       job.title = link.text.strip
@@ -71,19 +72,19 @@ class Scraper
     @matches << job
   end
 
-  def export_matches
-    puts "Exporting matches..."
-    CSV.open("/exports/jobs-#{Time.now}.csv", "wb") do |csv|
+  def export_matches(name)
+    puts "Exporting matches for #{name}..."
+    CSV.open("exports/#{name}-jobs-#{Time.now}.csv", "wb") do |csv|
+      csv << [ "title",
+              "company",
+              "location",
+              "description",
+              "date_posted",
+              "date_scraped",
+              "salary",
+              "skills",
+              "remote" ]
       @matches.each do |job|
-        csv << [ "title",
-                "company",
-                "location",
-                "description",
-                "date_posted",
-                "date_scraped",
-                "salary",
-                "skills",
-                "remote" ]
         csv << [ job.title,
                 job.company,
                 job.location,
@@ -100,6 +101,9 @@ class Scraper
 end #scraper
 
 scraper = Scraper.new('https://www.dice.com')
-scraper.scrape(title: 'Ruby on Rails Engineer', location: 'New Orleans, LA', distance: 0)
+scraper.scrape(title: 'Ruby on Rails Engineer', location: 'New Orleans, LA', name: 'anne')
+# scraper.scrape(title: 'Data Analyst Business Analyst', location: 'New Orleans, LA', name: 'josh')
+
+# scraper.export_matches
 
 #@params_url = "https://www.dice.com/jobs?q=Ruby+on+Rails+Engineer&l=New+Orleans%2C+LA&searchid=3113708184159&stst="
