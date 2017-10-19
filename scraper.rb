@@ -45,7 +45,6 @@ class Scraper
 
   def go_to_job_page(result, name)
     puts "Finding results for #{name}"
-    # link = result.links_with(:href => /jobs\/detail/).first
     result.links_with(:href => /jobs\/detail/).each do |link|
       job = Job.new
       job.description_url = "#{@base_url}#{link.href}"
@@ -85,7 +84,7 @@ class Scraper
 
   def export_matches(name)
     puts "Exporting matches for #{name}..."
-    CSV.open("exports/#{name}-jobs-#{Time.now}.csv", "wb") do |csv|
+    CSV.open("exports/#{name}-jobs-#{Time.now}.csv", 'a') do |csv|
       csv << [ "title",
               "job_id",
               "description_url",
