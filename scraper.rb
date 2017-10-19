@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'bundler/setup'
 require 'mechanize'
+require 'csv'
 require 'pry'
 
 require_relative 'job'
@@ -18,7 +19,7 @@ class Scraper
   def scrape(title:, location:, distance:)
     set_up_agent
     retrieve_job_results(title, location)
-    # export matches to csv
+    export_matches
   end
 
   private
@@ -53,6 +54,7 @@ class Scraper
   end
 
   def build_job(job_page, job)
+    puts "Building job #{job.title}..."
     job.company = job_page.root.css('li.employer a span').text.strip
     job.description = job_page.root.css('#jobdescSec[itemprop="description"]').text.strip
     job.location = job_page.root.css('li.location span').text.strip
@@ -67,7 +69,32 @@ class Scraper
 
   def add_job_to_matches(job)
     @matches << job
-    p job
+  end
+
+  def export_matches
+    puts "Exporting matches..."
+    CSV.open("/exports/jobs-#{Time.now}.csv", "wb") do |csv|
+      @matches.each do |job|
+        csv << [ "title",
+                "company",
+                "location",
+                "description",
+                "date_posted",
+                "date_scraped",
+                "salary",
+                "skills",
+                "remote" ]
+        csv << [ job.title,
+                job.company,
+                job.location,
+                job.description,
+                job.date_posted,
+                job.date_scraped,
+                job.salary,
+                job.skills,
+                job.remote ]
+      end #matches
+    end #CSV
   end
 
 end #scraper
