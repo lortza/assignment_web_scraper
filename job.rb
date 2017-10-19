@@ -1,12 +1,14 @@
 class Job
-  attr_accessor :title, :company, :location, :description, :date_posted, :date_scraped, :salary, :skills, :remote
+  attr_accessor :title, :job_id, :description_url, :company, :company_id, :location, :description, :date_posted, :salary, :skills, :remote
   def initialize
     @title = ''
+    @job_id = ''
+    @description_url = ''
     @company = ''
+    @company_id =''
     @location = ''
     @description = ''
     @date_posted = ''
-    @date_scraped = ''
     @salary = ''
     @skills = ''
     @remote = ''

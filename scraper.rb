@@ -45,9 +45,10 @@ class Scraper
 
   def go_to_job_page(result, name)
     puts "Finding results for #{name}"
+    # link = result.links_with(:href => /jobs\/detail/).first
     result.links_with(:href => /jobs\/detail/).each do |link|
       job = Job.new
-      job.title = link.text.strip
+      job.description_url = "#{@base_url}#{link.href}"
 
       job_page = link.click
       build_job(job_page, job)
@@ -55,17 +56,27 @@ class Scraper
   end
 
   def build_job(job_page, job)
+    job.title = job_page.root.css('h1.jobTitle').text.strip
     puts "Building job #{job.title}..."
+
+    job.job_id = get_company_info(job_page, 'Position Id :')
     job.company = job_page.root.css('li.employer a span').text.strip
+    job.company_id = get_company_info(job_page, 'Dice Id :')
     job.description = job_page.root.css('#jobdescSec[itemprop="description"]').text.strip
     job.location = job_page.root.css('li.location span').text.strip
-    job.date_posted = job_page.root.css('li.posted').text.strip
-    job.date_scraped = Time.now
-    job.salary = job_page.root.css('.iconsiblings[itemprop="baseSalary"]').text.strip
+    job.date_posted = job_page.root.at("meta[@itemprop='datePosted']")[:content].gsub(/T(.*)/,'')
+    job.salary = job_page.root.css('.iconsiblings span.mL20[itemprop="baseSalary"]').text.strip
     job.skills = job_page.root.css('.iconsiblings[itemprop="skills"]').text.strip
     job.remote = job_page.root.css('.iconsiblings span.mL20').text.strip
 
     add_job_to_matches(job)
+  end
+
+  def get_company_info(page, field_name)
+    page.root.css('.company-header-info > .row > .col-md-12').each do |row|
+      @data = row.text.strip if row.text.include?(field_name)
+    end
+    @data = @data.gsub(/#{field_name}/,'').strip
   end
 
   def add_job_to_matches(job)
@@ -76,21 +87,25 @@ class Scraper
     puts "Exporting matches for #{name}..."
     CSV.open("exports/#{name}-jobs-#{Time.now}.csv", "wb") do |csv|
       csv << [ "title",
+              "job_id",
+              "description_url",
               "company",
+              "company_id",
               "location",
               "description",
               "date_posted",
-              "date_scraped",
               "salary",
               "skills",
               "remote" ]
       @matches.each do |job|
         csv << [ job.title,
+                job.job_id,
+                job.description_url,
                 job.company,
+                job.company_id,
                 job.location,
                 job.description,
                 job.date_posted,
-                job.date_scraped,
                 job.salary,
                 job.skills,
                 job.remote ]
